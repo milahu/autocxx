@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use super::{
-    fun::{FnAnalysis, FnKind, FnPhase, MethodKind, TraitMethodKind},
+    fun::{FnAnalysis, FnKind, FnPhase, MethodKind, PodAndDepAnalysis, TraitMethodKind},
     pod::PodAnalysis,
 };
 use crate::conversion::api::Api;
@@ -43,8 +43,12 @@ pub(crate) fn mark_types_abstract(mut apis: Vec<Api<FnPhase>>) -> Vec<Api<FnPhas
 
     for mut api in apis.iter_mut() {
         match &mut api {
-            Api::Struct { analysis, name, .. } if abstract_types.contains(&name.name) => {
-                analysis.kind = TypeKind::Abstract;
+            Api::Struct {
+                analysis: PodAndDepAnalysis { pod, .. },
+                name,
+                ..
+            } if abstract_types.contains(&name.name) => {
+                pod.kind = TypeKind::Abstract;
             }
             _ => {}
         }
@@ -60,7 +64,11 @@ pub(crate) fn mark_types_abstract(mut apis: Vec<Api<FnPhase>>) -> Vec<Api<FnPhas
         for mut api in apis.iter_mut() {
             match &mut api {
                 Api::Struct {
-                    analysis: PodAnalysis { bases, kind, .. },
+                    analysis:
+                        PodAndDepAnalysis {
+                            pod: PodAnalysis { bases, kind, .. },
+                            ..
+                        },
                     ..
                 } if *kind != TypeKind::Abstract && (!abstract_types.is_disjoint(bases)) => {
                     *kind = TypeKind::Abstract;
@@ -101,8 +109,12 @@ pub(crate) fn mark_types_abstract(mut apis: Vec<Api<FnPhase>>) -> Vec<Api<FnPhas
     convert_item_apis(apis, &mut results, |api| match api {
         Api::Struct {
             analysis:
-                PodAnalysis {
-                    kind: TypeKind::Abstract,
+                PodAndDepAnalysis {
+                    pod:
+                        PodAnalysis {
+                            kind: TypeKind::Abstract,
+                            ..
+                        },
                     ..
                 },
             ..
