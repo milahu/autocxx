@@ -901,11 +901,7 @@ impl<'a> FnAnalyzer<'a> {
                 ) if !known_types().is_cxx_acceptable_receiver(self_ty) => {
                     set_ignore_reason(ConvertError::UnsupportedReceiver);
                 }
-                FnKind::Method(ref self_ty, _)
-                | FnKind::TraitMethod {
-                    impl_for: ref self_ty,
-                    ..
-                } if !self.is_on_allowlist(self_ty) => {
+                FnKind::Method(ref self_ty, _) if !self.is_on_allowlist(self_ty) => {
                     // Bindgen will output methods for types which have been encountered
                     // virally as arguments on other allowlisted types. But we don't want
                     // to generate methods unless the user has specifically asked us to.
