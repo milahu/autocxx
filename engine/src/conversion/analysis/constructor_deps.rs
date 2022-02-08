@@ -88,6 +88,7 @@ fn find_important_constructors(
                                 impl_for,
                                 ..
                             },
+                        ignore_reason: Ok(_),
                         ..
                     },
                 ..
