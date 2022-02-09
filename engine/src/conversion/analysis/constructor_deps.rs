@@ -16,7 +16,7 @@ use std::collections::HashMap;
 
 use crate::{
     conversion::{
-        api::{Api, ApiName, StructDetails},
+        api::{Api, ApiName, StructDetails, TypeKind},
         convert_error::ConvertErrorWithContext,
         error_reporter::convert_apis,
     },
@@ -55,9 +55,14 @@ fn decorate_struct(
     pod: PodAnalysis,
     constructors_and_allocators_by_type: &mut HashMap<QualifiedName, Vec<QualifiedName>>,
 ) -> Result<Box<dyn Iterator<Item = Api<FnPhase>>>, ConvertErrorWithContext> {
-    let constructor_and_allocator_deps = constructors_and_allocators_by_type
-        .remove(&name.name)
-        .unwrap_or_default();
+    let is_abstract = matches!(pod.kind, TypeKind::Abstract);
+    let constructor_and_allocator_deps = if is_abstract || pod.is_generic {
+        Vec::new()
+    } else {
+        constructors_and_allocators_by_type
+            .remove(&name.name)
+            .unwrap_or_default()
+    };
     Ok(Box::new(std::iter::once(Api::Struct {
         name,
         details,

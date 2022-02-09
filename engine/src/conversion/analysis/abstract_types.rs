@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use super::{
-    fun::{FnAnalysis, FnKind, FnPhase, MethodKind, PodAndDepAnalysis, TraitMethodKind},
+    fun::{FnAnalysis, FnKind, FnPhase, FnPhase1, MethodKind, TraitMethodKind},
     pod::PodAnalysis,
 };
 use crate::conversion::api::Api;
@@ -25,7 +25,7 @@ use crate::conversion::{
 use std::collections::HashSet;
 
 /// Spot types with pure virtual functions and mark them abstract.
-pub(crate) fn mark_types_abstract(mut apis: Vec<Api<FnPhase>>) -> Vec<Api<FnPhase>> {
+pub(crate) fn mark_types_abstract(mut apis: Vec<Api<FnPhase1>>) -> Vec<Api<FnPhase1>> {
     let mut abstract_types: HashSet<_> = apis
         .iter()
         .filter_map(|api| match &api {
@@ -43,12 +43,8 @@ pub(crate) fn mark_types_abstract(mut apis: Vec<Api<FnPhase>>) -> Vec<Api<FnPhas
 
     for mut api in apis.iter_mut() {
         match &mut api {
-            Api::Struct {
-                analysis: PodAndDepAnalysis { pod, .. },
-                name,
-                ..
-            } if abstract_types.contains(&name.name) => {
-                pod.kind = TypeKind::Abstract;
+            Api::Struct { analysis, name, .. } if abstract_types.contains(&name.name) => {
+                analysis.kind = TypeKind::Abstract;
             }
             _ => {}
         }
@@ -64,11 +60,7 @@ pub(crate) fn mark_types_abstract(mut apis: Vec<Api<FnPhase>>) -> Vec<Api<FnPhas
         for mut api in apis.iter_mut() {
             match &mut api {
                 Api::Struct {
-                    analysis:
-                        PodAndDepAnalysis {
-                            pod: PodAnalysis { bases, kind, .. },
-                            ..
-                        },
+                    analysis: PodAnalysis { bases, kind, .. },
                     ..
                 } if *kind != TypeKind::Abstract && (!abstract_types.is_disjoint(bases)) => {
                     *kind = TypeKind::Abstract;
@@ -109,12 +101,8 @@ pub(crate) fn mark_types_abstract(mut apis: Vec<Api<FnPhase>>) -> Vec<Api<FnPhas
     convert_item_apis(apis, &mut results, |api| match api {
         Api::Struct {
             analysis:
-                PodAndDepAnalysis {
-                    pod:
-                        PodAnalysis {
-                            kind: TypeKind::Abstract,
-                            ..
-                        },
+                PodAnalysis {
+                    kind: TypeKind::Abstract,
                     ..
                 },
             ..
